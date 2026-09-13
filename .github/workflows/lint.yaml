@@ -46,7 +46,10 @@ jobs:
       - name: Verify PHP-FPM socket
         run: docker exec wyy-ha-smoke test -S /run/php/php-fpm.sock
       - name: Verify health HTTP status
-        run: test "$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:8099/health)" = 200
+        run: |
+          status=$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:8099/health)
+          echo "Health HTTP status: ${status}"
+          test "${status}" = 200
       - name: Verify health response
         run: curl --fail --silent http://127.0.0.1:8099/health | grep --quiet '"status":"ok"'
       - name: Clean up smoke-test container
