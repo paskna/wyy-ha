@@ -45,4 +45,4 @@ jobs:
         if: always()
         run: |
           docker rm --force wyy-ha-smoke 2>/dev/null || true
-          rm -rf .wyy-ha-smoke-data
+          sudo rm -rf .wyy-ha-smoke-data

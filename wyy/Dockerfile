@@ -32,7 +32,16 @@ RUN apk add --no-cache \
     imagemagick \
     libheif \
     tzdata \
-    && mkdir -p /run/nginx /run/php /opt/wyy
+    && mkdir -p /run/nginx /run/php /opt/wyy \
+    && sed -i \
+        -e 's/^user = .*/user = nginx/' \
+        -e 's/^group = .*/group = nginx/' \
+        -e 's#^listen = .*#listen = /run/php/php-fpm.sock#' \
+        -e 's/^;listen.owner = .*/listen.owner = nginx/' \
+        -e 's/^;listen.group = .*/listen.group = nginx/' \
+        -e 's/^;listen.mode = .*/listen.mode = 0660/' \
+        /etc/php84/php-fpm.d/www.conf \
+    && php-fpm84 -tt
 
 COPY rootfs /
 COPY run.sh /run.sh
