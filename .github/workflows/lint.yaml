@@ -49,7 +49,10 @@ jobs:
         run: |
           status=$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:8099/health)
           echo "Health HTTP status: ${status}"
-          test "${status}" = 200
+          if [[ "${status}" != 200 ]]; then
+            echo "::error title=Unexpected health status::Expected HTTP 200, received HTTP ${status}"
+            exit 1
+          fi
       - name: Verify health response
         run: curl --fail --silent http://127.0.0.1:8099/health | grep --quiet '"status":"ok"'
       - name: Clean up smoke-test container
