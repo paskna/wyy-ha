@@ -10,12 +10,28 @@ readonly BACKUP_DIR="${DATA_ROOT}/backups"
 readonly KEY_FILE="${DATA_ROOT}/app.key"
 readonly RUNTIME_FILE="${STORAGE_ROOT}/app/config/runtime.php"
 readonly LOCK_FILE="${STORAGE_ROOT}/app/installed.lock"
+readonly PHP_BIN="/usr/bin/php84"
 
 log() { bashio::log.info "WYY: $*"; }
 fail() { bashio::log.fatal "WYY: $*"; exit 1; }
 
-LOG_LEVEL="$(bashio::config 'log_level')"
-TIMEZONE="$(bashio::config 'timezone')"
+addon_option() {
+    local key="$1"
+    local fallback="$2"
+
+    if [[ -r /data/options.json ]]; then
+        local value
+        value="$(jq -r --arg key "${key}" '.[$key] // empty' /data/options.json)"
+        [[ -n "${value}" ]] && printf '%s' "${value}" && return
+    fi
+
+    printf '%s' "${fallback}"
+}
+
+[[ -x "${PHP_BIN}" ]] || fail "PHP 8.4 ist im Add-on-Image nicht verfuegbar."
+
+LOG_LEVEL="$(addon_option 'log_level' 'info')"
+TIMEZONE="$(addon_option 'timezone' 'Europe/Zurich')"
 export TZ="${TIMEZONE:-Europe/Zurich}"
 export WYY_DEPLOYMENT="homeassistant"
 export APP_ENV="production"
@@ -44,7 +60,7 @@ touch "${DATABASE_FILE}"
 
 if [[ ! -s "${KEY_FILE}" ]]; then
     umask 077
-    php -r 'echo "base64:" . base64_encode(random_bytes(32));' > "${KEY_FILE}"
+    "${PHP_BIN}" -r 'echo "base64:" . base64_encode(random_bytes(32));' > "${KEY_FILE}"
 fi
 
 export APP_KEY="$(tr -d '\r\n' < "${KEY_FILE}")"
@@ -75,7 +91,7 @@ return [
 EOF
 
 cd "${APP_ROOT}"
-if [[ -s "${DATABASE_FILE}" ]] && php artisan migrate:status --no-interaction | grep -q 'Pending'; then
+if [[ -s "${DATABASE_FILE}" ]] && "${PHP_BIN}" artisan migrate:status --no-interaction | grep -q 'Pending'; then
     backup_file="${BACKUP_DIR}/wyy-before-migration-$(date -u +%Y%m%dT%H%M%SZ).sqlite"
     cp "${DATABASE_FILE}" "${backup_file}"
     log "SQLite-Sicherung vor Migration erstellt: $(basename "${backup_file}")"
@@ -88,9 +104,9 @@ if [[ -s "${DATABASE_FILE}" ]] && php artisan migrate:status --no-interaction | 
 fi
 
 log "Pruefe Datenbankstruktur und fuehre erforderliche Migrationen aus."
-php artisan migrate --force --no-interaction || fail "Migration fehlgeschlagen. Details stehen im App-Log."
+"${PHP_BIN}" artisan migrate --force --no-interaction || fail "Migration fehlgeschlagen. Details stehen im App-Log."
 
-php -r '
+"${PHP_BIN}" -r '
 $db = new PDO("sqlite:" . getenv("DB_DATABASE"));
 $db->exec("PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000;");
 ' || fail "SQLite konnte nicht mit WAL und Foreign Keys initialisiert werden."
