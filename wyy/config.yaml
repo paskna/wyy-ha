@@ -15,7 +15,7 @@ ingress_entry: /
 panel_icon: mdi:glass-wine
 panel_title: WYY
 panel_admin: true
-watchdog: http://[HOST]:[PORT]/health
+watchdog: http://[HOST]:[PORT:8099]/health
 backup: cold
 stage: experimental
 image: ghcr.io/paskna/wyy-ha
