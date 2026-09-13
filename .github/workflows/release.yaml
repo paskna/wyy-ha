@@ -1,0 +1,19 @@
+name: Validate release metadata
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  version:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Match app version to release tag
+        shell: bash
+        run: |
+          version=$(sed -n 's/^version: "\(.*\)"/\1/p' wyy/config.yaml)
+          test "v${version}" = "${GITHUB_REF_NAME}"

@@ -1,0 +1,92 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+@theme {
+    --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+    --font-serif: 'Cormorant Garamond', Georgia, serif;
+    --color-ink: #120d0d;
+    --color-cream: #f7f0e6;
+    --color-mist: #cabfb8;
+    --color-gold: #d1a15f;
+    --color-burgundy-soft: rgba(130, 46, 43, 0.36);
+}
+
+@layer base {
+    body {
+        font-family: var(--font-sans);
+    }
+
+    .safe-bottom {
+        padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+    }
+}
+
+@layer components {
+    .btn-primary {
+        @apply inline-flex items-center rounded-full bg-[var(--color-gold)] px-5 py-3 text-sm font-semibold text-[#221614];
+    }
+    .btn-secondary {
+        @apply inline-flex items-center rounded-full border border-white/12 bg-white/6 px-5 py-3 text-sm font-medium text-[var(--color-cream)];
+    }
+    .card-grid {
+        @apply rounded-[30px] border border-white/8 bg-white/6 p-5;
+    }
+    .field {
+        @apply flex flex-col gap-2 text-sm text-[var(--color-mist)];
+    }
+    .field span {
+        @apply text-xs uppercase tracking-[0.25em];
+    }
+    .field input,
+    .field select,
+    .field textarea {
+        @apply w-full rounded-[20px] border border-white/10 bg-black/20 px-4 py-3 text-base text-[var(--color-cream)] outline-none;
+    }
+    .field small {
+        @apply text-rose-300;
+    }
+    .nav-pill {
+        @apply flex min-w-[64px] items-center justify-center rounded-full px-3 py-2 text-[11px] text-[var(--color-mist)];
+    }
+    .nav-pill-center {
+        @apply -mt-8 rounded-full bg-[var(--color-gold)] px-5 py-3 text-[13px] font-semibold text-[#201615] md:mt-0;
+    }
+    .nav-pill-active:not(.nav-pill-center) {
+        @apply bg-white/8 text-[var(--color-cream)];
+    }
+    .section-head {
+        @apply flex items-end justify-between gap-4;
+    }
+    .section-head h2 {
+        @apply font-serif text-2xl;
+    }
+    .empty-card {
+        @apply rounded-[28px] border border-dashed border-white/10 bg-black/12 p-6 text-sm leading-6 text-[var(--color-mist)];
+    }
+    .metric-card {
+        @apply rounded-[28px] border border-white/8 bg-white/6 p-5;
+    }
+    .metric-card span {
+        @apply block text-sm text-[var(--color-mist)];
+    }
+    .metric-card strong {
+        @apply mt-2 block font-serif text-4xl;
+    }
+    .choice-chip {
+        @apply rounded-[20px] border border-white/10 bg-black/15 px-4 py-3 text-sm;
+    }
+    .choice-chip-active {
+        @apply border-[var(--color-gold)] bg-[var(--color-burgundy-soft)];
+    }
+    .scan-steps {
+        @apply grid gap-2 text-xs text-[var(--color-mist)] md:grid-cols-5;
+    }
+    .scan-steps span {
+        @apply rounded-full border border-white/8 px-3 py-2 text-center;
+    }
+    .scan-steps span.active {
+        @apply border-[var(--color-gold)] bg-[var(--color-burgundy-soft)] text-[var(--color-cream)];
+    }
+}

@@ -1,0 +1,21 @@
+name: Lint Home Assistant App
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install yamllint
+      - run: yamllint -d "{extends: default, rules: {line-length: disable}}" repository.yaml wyy/config.yaml wyy/build.yaml wyy/translations
+      - run: test -f wyy/Dockerfile && test -x wyy/run.sh && test -f wyy/rootfs/etc/nginx/http.d/wyy.conf

@@ -1,0 +1,6 @@
+.DS_Store
+*.log
+.phpunit.result.cache
+data/
+coverage/
+wyy/rootfs/opt/wyy/storage/framework/testing/

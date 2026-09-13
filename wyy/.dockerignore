@@ -1,0 +1,9 @@
+.DS_Store
+rootfs/opt/wyy/.env
+rootfs/opt/wyy/.git
+rootfs/opt/wyy/storage/app/installed.lock
+rootfs/opt/wyy/storage/app/config/runtime.php
+rootfs/opt/wyy/storage/framework/cache/**
+rootfs/opt/wyy/storage/framework/sessions/**
+rootfs/opt/wyy/storage/framework/views/**
+rootfs/opt/wyy/storage/logs/**

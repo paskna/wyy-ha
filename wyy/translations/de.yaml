@@ -1,0 +1,7 @@
+configuration:
+  log_level:
+    name: Protokollierungsstufe
+    description: Detailgrad der WYY-Containerprotokolle.
+  timezone:
+    name: Zeitzone
+    description: IANA-Zeitzone fuer den WYY-Container, beispielsweise Europe/Zurich.
