@@ -112,6 +112,7 @@ $db->exec("PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL; PRAGMA busy_time
 ' || fail "SQLite konnte nicht mit WAL und Foreign Keys initialisiert werden."
 
 printf '{"deployment":"homeassistant","completed_at":"%s"}\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "${LOCK_FILE}"
+chown -R nginx:nginx "${DATA_ROOT}"
 chmod 0600 "${KEY_FILE}" "${RUNTIME_FILE}" "${LOCK_FILE}"
 
 rm -f /run/php/php-fpm.pid

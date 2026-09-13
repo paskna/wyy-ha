@@ -32,16 +32,7 @@ RUN apk add --no-cache \
     imagemagick \
     libheif \
     tzdata \
-    && mkdir -p /run/nginx /run/php /opt/wyy \
-    && sed -i \
-        -e 's/^user = .*/user = nginx/' \
-        -e 's/^group = .*/group = nginx/' \
-        -e 's#^listen = .*#listen = /run/php/php-fpm.sock#' \
-        -e 's/^;listen.owner = .*/listen.owner = nginx/' \
-        -e 's/^;listen.group = .*/listen.group = nginx/' \
-        -e 's/^;listen.mode = .*/listen.mode = 0660/' \
-        /etc/php84/php-fpm.d/www.conf \
-    && php-fpm84 -tt
+    && mkdir -p /run/nginx /run/php /opt/wyy
 
 COPY rootfs /
 COPY run.sh /run.sh
@@ -49,7 +40,8 @@ COPY run.sh /run.sh
 RUN chmod 0755 /run.sh /etc/nginx/http.d/wyy.conf \
     && chmod 0755 /opt/wyy/artisan \
     && rm -rf /opt/wyy/storage \
-    && ln -s /data/wyy/storage /opt/wyy/storage
+    && ln -s /data/wyy/storage /opt/wyy/storage \
+    && php-fpm84 -tt
 
 LABEL \
     io.hass.version="${BUILD_VERSION}" \
