@@ -26,11 +26,13 @@ jobs:
         run: |
           mkdir -p .wyy-ha-smoke-data
           printf '%s\n' '{"log_level":"info","timezone":"Europe/Zurich"}' > .wyy-ha-smoke-data/options.json
-      - name: Verify first boot, migrations, and health endpoint
+      - name: Start smoke-test container
         run: |
           docker run --detach --name wyy-ha-smoke --publish 127.0.0.1:8099:8099 --volume "$PWD/.wyy-ha-smoke-data:/data" wyy-ha:smoke
+      - name: Wait for the HTTP service
+        run: |
           for attempt in $(seq 1 60); do
-            if curl --fail --silent http://127.0.0.1:8099/health | grep --quiet '"status":"ok"'; then
+            if curl --silent --output /dev/null --connect-timeout 1 http://127.0.0.1:8099/health; then
               exit 0
             fi
             if ! docker inspect --format '{{.State.Running}}' wyy-ha-smoke | grep --quiet true; then
@@ -41,6 +43,12 @@ jobs:
           done
           docker logs wyy-ha-smoke
           exit 1
+      - name: Verify PHP-FPM socket
+        run: docker exec wyy-ha-smoke test -S /run/php/php-fpm.sock
+      - name: Verify health HTTP status
+        run: test "$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:8099/health)" = 200
+      - name: Verify health response
+        run: curl --fail --silent http://127.0.0.1:8099/health | grep --quiet '"status":"ok"'
       - name: Clean up smoke-test container
         if: always()
         run: |
