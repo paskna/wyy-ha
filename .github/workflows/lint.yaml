@@ -17,5 +17,26 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install yamllint
-      - run: yamllint -d "{extends: default, rules: {line-length: disable}}" repository.yaml wyy/config.yaml wyy/build.yaml wyy/translations
+      - run: |
+          yamllint -d '{extends: default, rules: {line-length: disable}}' repository.yaml wyy/config.yaml wyy/translations
       - run: test -f wyy/Dockerfile && test -x wyy/run.sh && test -f wyy/rootfs/etc/nginx/http.d/wyy.conf
+      - name: Build and boot the app container
+        run: docker build --build-arg BUILD_VERSION=0.1.1 --tag wyy-ha:smoke ./wyy
+      - name: Verify first boot, migrations, and health endpoint
+        run: |
+          docker run --detach --name wyy-ha-smoke --publish 127.0.0.1:8099:8099 --tmpfs /data wyy-ha:smoke
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:8099/health | grep --quiet '"status":"ok"'; then
+              exit 0
+            fi
+            if ! docker inspect --format '{{.State.Running}}' wyy-ha-smoke | grep --quiet true; then
+              docker logs wyy-ha-smoke
+              exit 1
+            fi
+            sleep 2
+          done
+          docker logs wyy-ha-smoke
+          exit 1
+      - name: Clean up smoke-test container
+        if: always()
+        run: docker rm --force wyy-ha-smoke 2>/dev/null || true

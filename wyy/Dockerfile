@@ -1,8 +1,7 @@
-ARG BUILD_FROM=ghcr.io/home-assistant/base:3.24-2026.06.1
-FROM ${BUILD_FROM}
+FROM ghcr.io/home-assistant/base:3.24-2026.06.1
 
 ARG BUILD_ARCH
-ARG BUILD_VERSION=0.1.0
+ARG BUILD_VERSION=0.1.1
 
 RUN apk add --no-cache \
     nginx \

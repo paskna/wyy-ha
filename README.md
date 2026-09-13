@@ -18,15 +18,15 @@ with App support. It supports `amd64` and `aarch64` (including Raspberry Pi 5
 ## Publishing images
 
 The App points to `ghcr.io/paskna/wyy-ha`. GitHub Actions builds `amd64` and
-`aarch64` images for tags and publishes a multi-architecture manifest. Publish
-the GHCR package publicly before sharing the repository; Home Assistant must be
-able to pull it without a registry login.
+`aarch64` images for release tags and publishes a multi-architecture manifest.
+The public GHCR package can be pulled by Home Assistant without a registry
+login.
 
 ## Local checks
 
 ```sh
-yamllint repository.yaml wyy/config.yaml wyy/build.yaml
-docker build --build-arg BUILD_FROM=ghcr.io/home-assistant/amd64-base:3.24-2026.06.1 -t wyy-ha:dev wyy
+yamllint repository.yaml wyy/config.yaml wyy/translations
+docker build -t wyy-ha:dev wyy
 ```
 
 See [wyy/DOCS.md](wyy/DOCS.md) for persistence, backup, ingress and recovery

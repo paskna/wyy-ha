@@ -34,13 +34,11 @@ decrypt WYY settings and credentials after restore.
 From this directory:
 
 ```sh
-docker build --build-arg BUILD_FROM=ghcr.io/home-assistant/amd64-base:3.24-2026.06.1 -t wyy-ha:dev .
+docker build -t wyy-ha:dev .
 docker run --rm -p 8099:8099 -v "$PWD/data:/data" wyy-ha:dev
 ```
 
-The ingress-only Nginx configuration intentionally accepts the Home Assistant
-Supervisor and loopback health checks. For direct development, use `docker
-exec` or temporarily adjust the allow list locally; do not publish a direct
-port for production use.
+The App has no host port mapping in Home Assistant; access is provided through
+Ingress. The direct port mapping above is solely for local development.
 
 See [TESTING.md](TESTING.md) for the real Home Assistant OS acceptance steps.
