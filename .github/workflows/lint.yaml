@@ -56,8 +56,14 @@ jobs:
             cat "${response_file}"
             echo "Container output:"
             docker logs wyy-ha-smoke
+            echo "Nginx error output:"
+            docker exec wyy-ha-smoke sh -c 'test ! -s /var/log/nginx/error.log || tail -n 120 /var/log/nginx/error.log'
+            echo "PHP-FPM error output:"
+            docker exec wyy-ha-smoke sh -c 'test ! -s /var/log/php84/error.log || tail -n 120 /var/log/php84/error.log'
             echo "Laravel output:"
             docker exec wyy-ha-smoke sh -c 'test ! -s /data/wyy/storage/logs/laravel.log || tail -n 120 /data/wyy/storage/logs/laravel.log'
+            echo "Laravel CLI bootstrap as nginx:"
+            docker exec --user nginx wyy-ha-smoke sh -c 'cd /opt/wyy && php84 artisan about'
             exit 1
           fi
       - name: Clean up smoke-test container
