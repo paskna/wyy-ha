@@ -91,10 +91,20 @@ class InstallationService
     public function detectedUrl(Request $request): array
     {
         $scheme = $this->detectedScheme($request);
-        $rawHost = (string) ($request->server('HTTP_HOST') ?: $request->server('SERVER_NAME') ?: $request->getHost());
-        $host = $this->validatedHost((string) preg_replace('/:\d+$/', '', $rawHost));
-        $port = (int) ($request->server('SERVER_PORT') ?: $request->getPort());
         $basePath = $this->basePath($request);
+        $forwardedHost = $this->firstForwardedValue((string) $request->server('HTTP_X_FORWARDED_HOST', ''));
+        $requestHost = (string) ($request->server('HTTP_HOST') ?: $request->server('SERVER_NAME') ?: $request->getHost());
+        [$host, $hostPort] = $this->splitAuthority($forwardedHost !== '' ? $forwardedHost : $requestHost);
+        [, $requestHostPort] = $this->splitAuthority($requestHost);
+        $forwardedPort = $this->validatedPort($this->firstForwardedValue((string) $request->server('HTTP_X_FORWARDED_PORT', '')));
+        $hasForwardedOrigin = $forwardedHost !== ''
+            || $this->firstForwardedValue((string) $request->server('HTTP_X_FORWARDED_PROTO', '')) !== ''
+            || $forwardedPort !== null
+            || $basePath !== '';
+        $port = $hostPort
+            ?? $forwardedPort
+            ?? $requestHostPort
+            ?? ($hasForwardedOrigin ? ($scheme === 'https' ? 443 : 80) : (int) ($request->server('SERVER_PORT') ?: $request->getPort()));
         $showPort = ! in_array([$scheme, $port], [['http', 80], ['https', 443]], true);
         $authority = $host.($showPort ? ':'.$port : '');
         $appUrl = rtrim($scheme.'://'.$authority.$basePath, '/');
@@ -484,21 +494,60 @@ class InstallationService
 
     private function detectedScheme(Request $request): string
     {
-        $forwardedProto = strtolower((string) $request->server('HTTP_X_FORWARDED_PROTO', ''));
+        $forwardedProto = strtolower($this->firstForwardedValue((string) $request->server('HTTP_X_FORWARDED_PROTO', '')));
         $forwardedSsl = strtolower((string) $request->server('HTTP_X_FORWARDED_SSL', ''));
 
-        if ($forwardedProto === 'https' || $forwardedSsl === 'on') {
-            return 'https';
+        if (in_array($forwardedProto, ['http', 'https'], true)) {
+            return $forwardedProto;
         }
 
-        return $request->isSecure() ? 'https' : 'http';
+        return $forwardedSsl === 'on' || $request->isSecure() ? 'https' : 'http';
+    }
+
+    private function firstForwardedValue(string $value): string
+    {
+        return trim(explode(',', $value, 2)[0]);
+    }
+
+    private function splitAuthority(string $authority): array
+    {
+        $authority = trim($authority);
+
+        if (preg_match('/^\[([0-9a-f:.]+)\](?::([0-9]{1,5}))?$/i', $authority, $matches)) {
+            $host = filter_var($matches[1], FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)
+                ? '['.$matches[1].']'
+                : 'localhost';
+
+            return [$host, $this->validatedPort($matches[2] ?? '')];
+        }
+
+        if (substr_count($authority, ':') === 1 && preg_match('/^(.+):([0-9]{1,5})$/', $authority, $matches)) {
+            return [$this->validatedHost($matches[1]), $this->validatedPort($matches[2])];
+        }
+
+        return [$this->validatedHost($authority), null];
+    }
+
+    private function validatedPort(string $port): ?int
+    {
+        if ($port === '' || ! ctype_digit($port)) {
+            return null;
+        }
+
+        $number = (int) $port;
+
+        return $number >= 1 && $number <= 65535 ? $number : null;
     }
 
     private function validatedHost(string $host): string
     {
         $host = trim($host);
 
-        if ($host === '' || preg_match('/[^a-z0-9\.\-\:]/i', $host)) {
+        if (str_contains($host, ':')) {
+            return filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) ? '['.$host.']' : 'localhost';
+        }
+
+        if ($host === '' || ! preg_match('/^[a-z0-9](?:[a-z0-9\.\-]*[a-z0-9])?$/i', $host)) {
             return 'localhost';
         }
 

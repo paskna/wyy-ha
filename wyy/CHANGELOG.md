@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.3
+
+- Preserve the external Home Assistant host, port and Ingress prefix in redirects and asset URLs.
+- Forward reverse-proxy origin headers to PHP without treating plain HTTP as HTTPS.
+- Replace the stale frontend bundle and disable service-worker registration during Ingress use.
+- Exercise the complete Ingress redirect and frontend-asset flow in container CI.
+
 ## 0.1.2
 
 - Fix the blank Home Assistant Ingress page caused by unreadable Laravel cache manifests.

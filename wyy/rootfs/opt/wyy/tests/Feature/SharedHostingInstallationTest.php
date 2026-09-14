@@ -8,8 +8,8 @@ use App\Http\Controllers\PwaController;
 use App\Middleware\ApplyRuntimeSettings;
 use App\Models\User;
 use App\Services\InstallationService;
-use Illuminate\Http\Request;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Tests\TestCase;
 
@@ -239,12 +239,17 @@ class SharedHostingInstallationTest extends TestCase
     {
         config(['app.deployment' => 'homeassistant']);
         $request = Request::create('/sw.js', 'GET', server: [
-            'HTTP_HOST' => 'homeassistant.local',
-            'HTTP_X_FORWARDED_PROTO' => 'https',
+            'HTTP_HOST' => '192.168.2.220:8123',
+            'SERVER_PORT' => 8099,
+            'HTTP_X_FORWARDED_PROTO' => 'http',
             'HTTP_X_INGRESS_PATH' => '/api/hassio_ingress/token-123',
         ]);
 
-        $this->assertSame('/api/hassio_ingress/token-123', app(InstallationService::class)->detectedUrl($request)['base_path']);
+        $detected = app(InstallationService::class)->detectedUrl($request);
+
+        $this->assertSame('/api/hassio_ingress/token-123', $detected['base_path']);
+        $this->assertSame(8123, $detected['port']);
+        $this->assertSame('http://192.168.2.220:8123/api/hassio_ingress/token-123', $detected['app_url']);
 
         app(ApplyRuntimeSettings::class)->handle($request, fn () => response('ok'));
         $this->assertSame('/', config('session.path'));
@@ -255,5 +260,50 @@ class SharedHostingInstallationTest extends TestCase
         $this->assertSame(200, $response->getStatusCode());
         $this->assertStringContainsString('no-store', (string) $response->headers->get('Cache-Control'));
         $this->assertStringContainsString('unregister', $response->getContent());
+    }
+
+    public function test_home_assistant_ingress_prefers_the_forwarded_external_origin(): void
+    {
+        config(['app.deployment' => 'homeassistant']);
+        $request = Request::create('/setup', 'GET', server: [
+            'HTTP_HOST' => '172.30.32.2:8099',
+            'SERVER_PORT' => 8099,
+            'HTTP_X_FORWARDED_HOST' => 'ha.example.test',
+            'HTTP_X_FORWARDED_PORT' => '443',
+            'HTTP_X_FORWARDED_PROTO' => 'https, http',
+            'HTTP_X_INGRESS_PATH' => '/api/hassio_ingress/token-456',
+        ]);
+
+        $detected = app(InstallationService::class)->detectedUrl($request);
+
+        $this->assertSame('https', $detected['scheme']);
+        $this->assertNull($detected['port']);
+        $this->assertSame('https://ha.example.test/api/hassio_ingress/token-456', $detected['app_url']);
+    }
+
+    public function test_home_assistant_ingress_redirects_and_assets_keep_the_external_origin(): void
+    {
+        config(['app.deployment' => 'homeassistant']);
+        $server = [
+            'HTTP_HOST' => '192.168.2.220:8123',
+            'SERVER_PORT' => 8099,
+            'HTTP_X_FORWARDED_PROTO' => 'http',
+            'HTTP_X_INGRESS_PATH' => '/api/hassio_ingress/token-browser',
+        ];
+
+        $this->withServerVariables($server)
+            ->get('http://192.168.2.220:8123/login')
+            ->assertRedirect('http://192.168.2.220:8123/api/hassio_ingress/token-browser/setup');
+
+        $this->withServerVariables($server)
+            ->get('http://192.168.2.220:8123/setup')
+            ->assertOk()
+            ->assertSee('http://192.168.2.220:8123/api/hassio_ingress/token-browser/build/assets/app-D7vHc2rM.js', false)
+            ->assertDontSee('meta name="app-sw-url"', false);
+
+        $compiledJavascript = File::get(public_path('build/assets/app-D7vHc2rM.js'));
+
+        $this->assertStringContainsString('meta[name="app-sw-url"]', $compiledJavascript);
+        $this->assertStringNotContainsString('register(`/sw.js`)', $compiledJavascript);
     }
 }

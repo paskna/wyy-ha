@@ -7,7 +7,7 @@
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <meta name="app-base-path" content="{{ request()->getBaseUrl() }}">
+        <meta name="app-base-path" content="{{ app(\App\Services\InstallationService::class)->basePath(request()) }}">
         @if (!app(\App\Services\DeploymentMode::class)->isIngressRequest(request()))
             <meta name="app-sw-url" content="{{ route('pwa.worker') }}">
         @endif

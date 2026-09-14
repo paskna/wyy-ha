@@ -1,0 +1,1 @@
+if("serviceWorker"in navigator)window.addEventListener("load",()=>{const e=document.querySelector('meta[name="app-sw-url"]')?.content,t=document.querySelector('meta[name="app-base-path"]')?.content||"/",n=t===""?"/":`${t.replace(/\/$/,"")}/`;e&&navigator.serviceWorker.register(e,{scope:n}).catch(()=>{})});

@@ -8,10 +8,10 @@ use App\Services\InstallationService;
 use App\Services\SettingsService;
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
@@ -85,10 +85,7 @@ class ApplyRuntimeSettings
         ]);
 
         URL::forceRootUrl($detectedUrl['app_url']);
-
-        if ($detectedUrl['https']) {
-            URL::forceScheme('https');
-        }
+        URL::forceScheme($detectedUrl['scheme']);
 
         try {
             if (Schema::hasTable('settings')) {
