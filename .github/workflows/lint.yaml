@@ -21,7 +21,7 @@ jobs:
           yamllint -d '{extends: default, rules: {line-length: disable}}' repository.yaml wyy/config.yaml wyy/translations
       - run: test -f wyy/Dockerfile && test -x wyy/run.sh && test -f wyy/rootfs/etc/nginx/http.d/wyy.conf
       - name: Build and boot the app container
-        run: docker build --build-arg BUILD_VERSION=0.1.1 --tag wyy-ha:smoke ./wyy
+        run: docker build --build-arg BUILD_VERSION=0.1.2 --build-arg BUILD_ARCH=amd64 --tag wyy-ha:smoke ./wyy
       - name: Prepare Supervisor option data
         run: |
           mkdir -p .wyy-ha-smoke-data
@@ -45,6 +45,8 @@ jobs:
           exit 1
       - name: Verify PHP-FPM socket
         run: docker exec wyy-ha-smoke test -S /run/php/php-fpm.sock
+      - name: Verify Laravel cache permissions
+        run: docker exec --user nginx wyy-ha-smoke sh -c 'test -r /opt/wyy/bootstrap/cache/packages.php && test -r /opt/wyy/bootstrap/cache/services.php'
       - name: Verify health HTTP status
         run: |
           response_file=$(mktemp)

@@ -1,7 +1,7 @@
 FROM ghcr.io/home-assistant/base:3.24-2026.06.1
 
 ARG BUILD_ARCH
-ARG BUILD_VERSION=0.1.1
+ARG BUILD_VERSION=0.1.2
 
 RUN apk add --no-cache \
     nginx \

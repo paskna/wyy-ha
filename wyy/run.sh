@@ -90,6 +90,11 @@ return [
 ];
 EOF
 
+# Secret files above deliberately use a restrictive umask. Restore the normal
+# application umask before Artisan refreshes Composer/Laravel cache manifests;
+# otherwise PHP-FPM's nginx user cannot read root-created cache files.
+umask 022
+
 cd "${APP_ROOT}"
 if [[ -s "${DATABASE_FILE}" ]] && "${PHP_BIN}" artisan migrate:status --no-interaction | grep -q 'Pending'; then
     backup_file="${BACKUP_DIR}/wyy-before-migration-$(date -u +%Y%m%dT%H%M%SZ).sqlite"
@@ -112,7 +117,9 @@ $db->exec("PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL; PRAGMA busy_time
 ' || fail "SQLite konnte nicht mit WAL und Foreign Keys initialisiert werden."
 
 printf '{"deployment":"homeassistant","completed_at":"%s"}\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "${LOCK_FILE}"
-chown -R nginx:nginx "${DATA_ROOT}"
+chown -R nginx:nginx "${DATA_ROOT}" "${APP_ROOT}/bootstrap/cache"
+find "${DATA_ROOT}" "${APP_ROOT}/bootstrap/cache" -type d -exec chmod 0750 {} +
+find "${DATA_ROOT}" "${APP_ROOT}/bootstrap/cache" -type f -exec chmod 0640 {} +
 chmod 0600 "${KEY_FILE}" "${RUNTIME_FILE}" "${LOCK_FILE}"
 
 rm -f /run/php/php-fpm.pid
