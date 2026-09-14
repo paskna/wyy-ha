@@ -18,7 +18,7 @@ jobs:
           python-version: "3.12"
       - run: pip install yamllint
       - run: |
-          yamllint -d '{extends: default, rules: {line-length: disable}}' repository.yaml wyy/config.yaml wyy/translations
+          yamllint -d '{extends: default, rules: {line-length: disable}}' .github/workflows/*.yaml repository.yaml wyy/config.yaml wyy/translations
       - run: test -f wyy/Dockerfile && test -x wyy/run.sh && test -f wyy/rootfs/etc/nginx/http.d/wyy.conf
       - name: Build and boot the app container
         run: docker build --build-arg BUILD_VERSION=0.1.2 --build-arg BUILD_ARCH=amd64 --tag wyy-ha:smoke ./wyy
